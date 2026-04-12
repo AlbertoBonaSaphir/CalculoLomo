@@ -25,8 +25,11 @@ const DEFAULT_INPUT: SpineInput = {
   endpaperWeight: 0,
 };
 
+type BindingType = "blanda" | "dura";
+
 export default function HomePage() {
   const [input, setInput] = useState<SpineInput>(DEFAULT_INPUT);
+  const [binding, setBinding] = useState<BindingType>("blanda");
   const [openSection, setOpenSection] = useState<string | null>(null);
 
   // Real-time calculation
@@ -64,15 +67,40 @@ export default function HomePage() {
 
         {/* === RESULTS (hero) === */}
         {result && (
-          <div className="grid grid-cols-3 gap-3">
-            <SpineCard label="Fresado/PUR" value={result.fresado} raw={result.rawFresado} />
-            <SpineCard label="Rúst. Cosida" value={result.rusticaCosida} raw={result.rawRusticaCosida} />
-            <SpineCard label="Tapa Dura" value={result.tapaDura} raw={result.rawTapaDura} />
-          </div>
+          binding === "blanda" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <SpineCard label="Fresado / PUR" value={result.fresado} raw={result.rawFresado} />
+              <SpineCard label="Rústica Cosida" value={result.rusticaCosida} raw={result.rawRusticaCosida} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              <SpineCard label="Tapa Dura" value={result.tapaDura} raw={result.rawTapaDura} />
+            </div>
+          )
         )}
 
         {/* === INPUTS === */}
         <section className="bg-white rounded-2xl p-5 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+
+          {/* Tipo de tapa */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Tipo de encuadernación</span>
+            <div className="flex gap-1 h-[38px]">
+              {([["blanda", "Tapa Blanda"], ["dura", "Tapa Dura"]] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setBinding(val)}
+                  className={`flex-1 rounded-lg text-xs font-semibold transition-all ${
+                    binding === val
+                      ? "bg-[#e2001a] text-white shadow-sm"
+                      : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Tamaño + Páginas */}
           <div className="grid grid-cols-3 gap-3">
@@ -104,58 +132,65 @@ export default function HomePage() {
             <Field label="Gramaje interior (g)" value={input.paperWeight} step={5} onChange={(v) => set("paperWeight", v)} />
           </div>
 
-          {/* Cubierta + Tapa dura */}
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Gramaje cub. (g)" value={input.coverWeight} step={10} onChange={(v) => set("coverWeight", v)} />
-            <Field label="Cartón (mm)" value={input.cardboardThickness} step={0.25} onChange={(v) => set("cardboardThickness", v)} />
-            <Field label="Guardas (g)" value={input.endpaperWeight} step={10} onChange={(v) => set("endpaperWeight", v)} />
-          </div>
+          {/* Cubierta */}
+          {binding === "blanda" ? (
+            <div className="grid grid-cols-1 gap-3">
+              <Field label="Gramaje cubierta (g)" value={input.coverWeight} step={10} onChange={(v) => set("coverWeight", v)} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Gramaje forro (g)" value={input.coverWeight} step={10} onChange={(v) => set("coverWeight", v)} />
+              <Field label="Cartón (mm)" value={input.cardboardThickness} step={0.25} onChange={(v) => set("cardboardThickness", v)} />
+              <Field label="Guardas (g)" value={input.endpaperWeight} step={10} onChange={(v) => set("endpaperWeight", v)} />
+            </div>
+          )}
         </section>
 
         {/* === DETAILS (collapsible) === */}
         {result && (
           <div className="space-y-2">
-            {/* Peso Rústica */}
-            <Accordion
-              title="Peso rústica"
-              right={`${fmt(result.weightRustica.total)} g`}
-              open={openSection === "rustica"}
-              onToggle={() => setOpenSection(openSection === "rustica" ? null : "rustica")}
-            >
-              <DetailRow label="Interiores" value={`${fmt(result.weightRustica.interior)} g`} />
-              <DetailRow label="Cubierta plastificada" value={`${fmt(result.weightRustica.cover)} g`} />
-            </Accordion>
+            {binding === "blanda" ? (
+              <Accordion
+                title="Peso por ejemplar"
+                right={`${fmt(result.weightRustica.total)} g`}
+                open={openSection === "peso"}
+                onToggle={() => setOpenSection(openSection === "peso" ? null : "peso")}
+              >
+                <DetailRow label="Interiores" value={`${fmt(result.weightRustica.interior)} g`} />
+                <DetailRow label="Cubierta plastificada" value={`${fmt(result.weightRustica.cover)} g`} />
+              </Accordion>
+            ) : (
+              <>
+                <Accordion
+                  title="Peso por ejemplar"
+                  right={`${fmt(result.weightTapaDura.total)} g`}
+                  open={openSection === "peso"}
+                  onToggle={() => setOpenSection(openSection === "peso" ? null : "peso")}
+                >
+                  <DetailRow label="Interiores" value={`${fmt(result.weightTapaDura.interior)} g`} />
+                  <DetailRow label="Forro cubierta" value={`${fmt(result.weightTapaDura.coverLining)} g`} />
+                  <DetailRow label="Cartón bigrís" value={`${fmt(result.weightTapaDura.cardboard)} g`} />
+                  <DetailRow label="Guardas" value={`${fmt(result.weightTapaDura.endpapers)} g`} />
+                </Accordion>
 
-            {/* Peso Tapa dura */}
-            <Accordion
-              title="Peso tapa dura"
-              right={`${fmt(result.weightTapaDura.total)} g`}
-              open={openSection === "tapadura"}
-              onToggle={() => setOpenSection(openSection === "tapadura" ? null : "tapadura")}
-            >
-              <DetailRow label="Interiores" value={`${fmt(result.weightTapaDura.interior)} g`} />
-              <DetailRow label="Forro cubierta" value={`${fmt(result.weightTapaDura.coverLining)} g`} />
-              <DetailRow label="Cartón bigrís" value={`${fmt(result.weightTapaDura.cardboard)} g`} />
-              <DetailRow label="Guardas" value={`${fmt(result.weightTapaDura.endpapers)} g`} />
-            </Accordion>
-
-            {/* Desarrollo forro */}
-            <Accordion
-              title="Desarrollo forro"
-              right={`${fmt(result.hardcoverDevelopment.width)} × ${fmt(result.hardcoverDevelopment.height)} mm`}
-              open={openSection === "forro"}
-              onToggle={() => setOpenSection(openSection === "forro" ? null : "forro")}
-            >
-              <div className="flex items-center gap-0.5 text-[10px] text-center overflow-x-auto py-2">
-                <Block label="Pest." value={result.hardcoverDevelopment.flap} />
-                <Block label="Contrac." value={result.hardcoverDevelopment.backCover} />
-                <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
-                <Block label="Lomo" value={result.hardcoverDevelopment.spine} accent />
-                <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
-                <Block label="Cubier." value={result.hardcoverDevelopment.frontCover} />
-                <Block label="Pest." value={result.hardcoverDevelopment.flap} />
-              </div>
-            </Accordion>
+                <Accordion
+                  title="Desarrollo forro"
+                  right={`${fmt(result.hardcoverDevelopment.width)} × ${fmt(result.hardcoverDevelopment.height)} mm`}
+                  open={openSection === "forro"}
+                  onToggle={() => setOpenSection(openSection === "forro" ? null : "forro")}
+                >
+                  <div className="flex items-center gap-0.5 text-[10px] text-center overflow-x-auto py-2">
+                    <Block label="Pest." value={result.hardcoverDevelopment.flap} />
+                    <Block label="Contrac." value={result.hardcoverDevelopment.backCover} />
+                    <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
+                    <Block label="Lomo" value={result.hardcoverDevelopment.spine} accent />
+                    <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
+                    <Block label="Cubier." value={result.hardcoverDevelopment.frontCover} />
+                    <Block label="Pest." value={result.hardcoverDevelopment.flap} />
+                  </div>
+                </Accordion>
+              </>
+            )}
           </div>
         )}
 
