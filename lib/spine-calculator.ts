@@ -114,10 +114,8 @@ function lookupCardboardWeight(thickness: number): number {
 function roundSpine(raw: number, minimum: number): number {
   if (raw === 0) return 0;
   if (raw < minimum) return minimum;
-
-  const floored = Math.floor(raw);
-  const remainder = raw - floored;
-  return floored + (remainder < 0.5 ? 0.5 : 1);
+  // Round up to nearest 0.5mm
+  return Math.ceil(raw * 2) / 2;
 }
 
 /**
@@ -162,8 +160,8 @@ export function calculateSpine(input: SpineInput): SpineResult {
   const cardboardHeightMm = height * 10 + 7;
   const developmentHeight = cardboardHeightMm + flap * 2;
 
-  // Hardcover lining weight (forro)
-  const liningWeight = (developmentWidth * developmentHeight) * 163 / 1000000;
+  // Hardcover lining weight (forro + plastification 13 gsm)
+  const liningWeight = (developmentWidth * developmentHeight) * (coverWeight + 13) / 1000000;
 
   // Cardboard weight (bigris)
   const cardboardGsm = lookupCardboardWeight(cardboardThickness);

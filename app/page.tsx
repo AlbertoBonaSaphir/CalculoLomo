@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   calculateSpine,
   type SpineInput,
@@ -31,6 +31,11 @@ export default function HomePage() {
   const [input, setInput] = useState<SpineInput>(DEFAULT_INPUT);
   const [binding, setBinding] = useState<BindingType>("blanda");
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const widthRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    widthRef.current?.focus();
+  }, []);
 
   // Real-time calculation
   const result: SpineResult | null = useMemo(() => {
@@ -46,6 +51,12 @@ export default function HomePage() {
     }
   }
 
+  function clearAll() {
+    setInput(DEFAULT_INPUT);
+    setOpenSection(null);
+    widthRef.current?.focus();
+  }
+
   const fmt = (v: number, d = 1) => v.toFixed(d);
 
   return (
@@ -57,8 +68,16 @@ export default function HomePage() {
             <h1 className="text-lg font-extrabold text-[#1a1a2e] tracking-tight">Cálculo de Lomo</h1>
             <p className="text-[11px] text-gray-400">Encuadernación profesional</p>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/CalculoLomo/logo.jpg" alt="Logo" className="w-9 h-9 rounded-full" />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={clearAll}
+              className="h-8 px-3 rounded-lg bg-gray-100 text-xs font-semibold text-gray-500 hover:bg-gray-200 transition-colors"
+            >
+              Limpiar
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/CalculoLomo/logo.jpg" alt="Logo" className="w-9 h-9 rounded-full" />
+          </div>
         </div>
       </header>
 
@@ -103,7 +122,7 @@ export default function HomePage() {
 
           {/* Tamaño + Páginas */}
           <div className="grid grid-cols-3 gap-3">
-            <Field label="Ancho (cm)" value={input.width} step={0.1} onChange={(v) => set("width", v)} />
+            <Field label="Ancho (cm)" value={input.width} step={0.1} onChange={(v) => set("width", v)} inputRef={widthRef} />
             <Field label="Alto (cm)" value={input.height} step={0.1} onChange={(v) => set("height", v)} />
             <Field label="Páginas" value={input.pages} step={1} onChange={(v) => set("pages", v)} />
           </div>
@@ -178,15 +197,7 @@ export default function HomePage() {
                   open={openSection === "forro"}
                   onToggle={() => setOpenSection(openSection === "forro" ? null : "forro")}
                 >
-                  <div className="flex items-center gap-0.5 text-[10px] text-center overflow-x-auto py-2">
-                    <Block label="Pest." value={result.hardcoverDevelopment.flap} />
-                    <Block label="Contrac." value={result.hardcoverDevelopment.backCover} />
-                    <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
-                    <Block label="Lomo" value={result.hardcoverDevelopment.spine} accent />
-                    <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
-                    <Block label="Cubier." value={result.hardcoverDevelopment.frontCover} />
-                    <Block label="Pest." value={result.hardcoverDevelopment.flap} />
-                  </div>
+                  <DevelopmentDiagram dev={result.hardcoverDevelopment} />
                 </Accordion>
               </>
             )}
@@ -200,11 +211,12 @@ export default function HomePage() {
 
 /* --- Components --- */
 
-function Field({ label, value, step, onChange }: { label: string; value: number; step: number; onChange: (v: string) => void }) {
+function Field({ label, value, step, onChange, inputRef }: { label: string; value: number; step: number; onChange: (v: string) => void; inputRef?: React.Ref<HTMLInputElement> }) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{label}</span>
       <input
+        ref={inputRef}
         type="number"
         step={step}
         value={value || ""}
@@ -251,11 +263,67 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Block({ label, value, accent = false }: { label: string; value: number; accent?: boolean }) {
+function DevelopmentDiagram({ dev }: { dev: SpineResult["hardcoverDevelopment"] }) {
+  const sections = [
+    { label: "Pest.", value: dev.flap, accent: false },
+    { label: "Contracub.", value: dev.backCover, accent: false },
+    { label: "Franq.", value: dev.hinge, accent: false },
+    { label: "Lomo", value: dev.spine, accent: true },
+    { label: "Franq.", value: dev.hinge, accent: false },
+    { label: "Cubierta", value: dev.frontCover, accent: false },
+    { label: "Pest.", value: dev.flap, accent: false },
+  ];
+  const totalW = dev.width;
+  const cardboardH = dev.height - dev.flap * 2;
+
   return (
-    <div className={`flex-shrink-0 rounded-md px-2 py-1.5 ${accent ? "bg-[#1d3557]/8 ring-1 ring-[#1d3557]/20" : "bg-gray-50"}`}>
-      <p className="text-gray-400 leading-none mb-0.5">{label}</p>
-      <p className={`text-xs font-bold leading-none ${accent ? "text-[#1d3557]" : "text-[#1a1a2e]"}`}>{value}</p>
+    <div className="py-3 space-y-2">
+      {/* Main rectangle diagram */}
+      <div className="relative border border-gray-300 rounded-sm overflow-hidden" style={{ aspectRatio: `${totalW} / ${dev.height}` }}>
+        {/* Top flap */}
+        <div
+          className="absolute inset-x-0 top-0 border-b border-dashed border-gray-300"
+          style={{ height: `${(dev.flap / dev.height) * 100}%` }}
+        />
+        {/* Bottom flap */}
+        <div
+          className="absolute inset-x-0 bottom-0 border-t border-dashed border-gray-300"
+          style={{ height: `${(dev.flap / dev.height) * 100}%` }}
+        />
+        {/* Vertical sections */}
+        <div className="absolute inset-0 flex">
+          {sections.map((s, i) => (
+            <div
+              key={i}
+              className={`h-full ${s.accent ? "bg-[#1d3557]/10" : ""} ${i < sections.length - 1 ? "border-r border-dashed border-gray-300" : ""}`}
+              style={{ width: `${(s.value / totalW) * 100}%` }}
+            />
+          ))}
+        </div>
+        {/* Height label right side */}
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 text-[9px] text-gray-400 font-mono">
+          {cardboardH}
+        </div>
+      </div>
+
+      {/* Width dimension labels */}
+      <div className="flex text-[9px] font-mono text-center">
+        {sections.map((s, i) => (
+          <div
+            key={i}
+            className={`${s.accent ? "text-[#1d3557] font-bold" : "text-gray-400"}`}
+            style={{ width: `${(s.value / totalW) * 100}%` }}
+          >
+            <p className="leading-none">{s.value}</p>
+            <p className="leading-none mt-0.5 text-[8px] text-gray-300">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Total dimensions */}
+      <div className="text-center text-[10px] text-gray-400 font-mono">
+        {dev.width} × {dev.height} mm
+      </div>
     </div>
   );
 }
