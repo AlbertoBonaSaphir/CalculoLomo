@@ -15,14 +15,14 @@ const PAPER_TYPES: { value: PaperType; label: string }[] = [
 ];
 
 const DEFAULT_INPUT: SpineInput = {
-  width: 21,
-  height: 29.7,
-  pages: 128,
-  coverWeight: 300,
-  paperType: "M",
-  paperWeight: 135,
-  cardboardThickness: 2.5,
-  endpaperWeight: 140,
+  width: 0,
+  height: 0,
+  pages: 0,
+  coverWeight: 0,
+  paperType: "O",
+  paperWeight: 0,
+  cardboardThickness: 0,
+  endpaperWeight: 0,
 };
 
 export default function HomePage() {
