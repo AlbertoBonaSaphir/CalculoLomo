@@ -274,94 +274,68 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function DevelopmentDiagram({ dev }: { dev: SpineResult["hardcoverDevelopment"] }) {
   const sections = [
-    { label: "Pestaña", value: dev.flap, accent: false, small: true },
-    { label: "Contracubierta", value: dev.backCover, accent: false, small: false },
-    { label: "Franquicia", value: dev.hinge, accent: false, small: true },
-    { label: "Lomo", value: dev.spine, accent: true, small: true },
-    { label: "Franquicia", value: dev.hinge, accent: false, small: true },
-    { label: "Cubierta", value: dev.frontCover, accent: false, small: false },
-    { label: "Pestaña", value: dev.flap, accent: false, small: true },
+    { label: "Pest.", value: dev.flap, accent: false, grow: 0 },
+    { label: "Contracub.", value: dev.backCover, accent: false, grow: 1 },
+    { label: "Franq.", value: dev.hinge, accent: false, grow: 0 },
+    { label: "Lomo", value: dev.spine, accent: true, grow: 0 },
+    { label: "Franq.", value: dev.hinge, accent: false, grow: 0 },
+    { label: "Cubierta", value: dev.frontCover, accent: false, grow: 1 },
+    { label: "Pest.", value: dev.flap, accent: false, grow: 0 },
   ];
-  const totalW = dev.width;
   const cardboardH = dev.height - dev.flap * 2;
-  const flapPct = (dev.flap / dev.height) * 100;
 
   return (
-    <div className="py-3 space-y-3">
-      {/* Diagram with height labels */}
-      <div className="flex items-stretch gap-2">
-        {/* Height labels left */}
-        <div className="flex flex-col text-[9px] font-mono text-gray-400 w-8 flex-shrink-0">
-          <div className="flex items-center justify-end" style={{ height: `${flapPct}%` }}>
-            <span>{dev.flap}</span>
-          </div>
-          <div className="flex items-center justify-end flex-1">
-            <span>{cardboardH}</span>
-          </div>
-          <div className="flex items-center justify-end" style={{ height: `${flapPct}%` }}>
-            <span>{dev.flap}</span>
-          </div>
-        </div>
-
-        {/* Main rectangle */}
-        <div className="flex-1 relative rounded-md overflow-hidden border-2 border-[#1d3557]/30" style={{ aspectRatio: `${totalW} / ${dev.height}` }}>
-          {/* Top flap area */}
-          <div
-            className="absolute inset-x-0 top-0 bg-gray-50/80 border-b border-dashed border-[#1d3557]/20"
-            style={{ height: `${flapPct}%` }}
-          />
-          {/* Bottom flap area */}
-          <div
-            className="absolute inset-x-0 bottom-0 bg-gray-50/80 border-t border-dashed border-[#1d3557]/20"
-            style={{ height: `${flapPct}%` }}
-          />
-          {/* Vertical sections */}
-          <div className="absolute inset-0 flex">
-            {sections.map((s, i) => (
-              <div
-                key={i}
-                className={`h-full flex items-center justify-center ${
-                  s.accent ? "bg-[#1d3557]/15" : ""
-                } ${i < sections.length - 1 ? "border-r border-dashed border-[#1d3557]/20" : ""}`}
-                style={{ width: `${(s.value / totalW) * 100}%` }}
-              >
-                {!s.small && (
-                  <span className="text-[9px] font-medium text-[#1d3557]/40 select-none">
-                    {s.label}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Width dimension labels below diagram */}
-      <div className="flex ml-10">
+    <div className="py-2 space-y-4">
+      {/* Horizontal bar diagram */}
+      <div className="flex h-16 rounded-lg overflow-hidden border-2 border-[#1d3557]/25">
         {sections.map((s, i) => (
           <div
             key={i}
-            className="flex flex-col items-center"
-            style={{ width: `${(s.value / totalW) * 100}%` }}
+            className={`flex flex-col items-center justify-center px-1 ${
+              s.accent
+                ? "bg-[#1d3557] text-white"
+                : i === 0 || i === sections.length - 1
+                  ? "bg-[#1d3557]/5"
+                  : "bg-white"
+            } ${i < sections.length - 1 ? "border-r border-[#1d3557]/15" : ""}`}
+            style={{ flexGrow: s.grow, flexBasis: s.grow ? 0 : "auto", minWidth: "40px" }}
           >
-            <div className={`text-[10px] font-mono font-bold leading-none ${
-              s.accent ? "text-[#1d3557]" : "text-gray-500"
+            <span className={`text-[10px] font-medium leading-tight ${
+              s.accent ? "text-white/80" : "text-gray-400"
+            }`}>
+              {s.label}
+            </span>
+            <span className={`text-sm font-bold leading-tight ${
+              s.accent ? "text-white" : "text-[#1a1a2e]"
             }`}>
               {s.value}
-            </div>
-            <div className={`text-[8px] leading-none mt-0.5 ${
-              s.accent ? "text-[#1d3557]/70" : "text-gray-300"
-            }`}>
-              {s.small ? s.label.substring(0, 4) + "." : s.label.substring(0, 6) + "."}
-            </div>
+            </span>
           </div>
         ))}
       </div>
 
-      {/* Total dimensions */}
+      {/* Height breakdown */}
+      <div className="flex items-center gap-3 justify-center">
+        <div className="flex items-center h-10 rounded-lg overflow-hidden border border-[#1d3557]/15 text-[11px]">
+          <div className="h-full flex flex-col items-center justify-center px-3 bg-[#1d3557]/5">
+            <span className="text-gray-400 text-[9px]">Pest.</span>
+            <span className="font-bold text-[#1a1a2e]">{dev.flap}</span>
+          </div>
+          <div className="h-full flex flex-col items-center justify-center px-5 border-x border-[#1d3557]/15">
+            <span className="text-gray-400 text-[9px]">Alto cartón</span>
+            <span className="font-bold text-[#1a1a2e]">{cardboardH}</span>
+          </div>
+          <div className="h-full flex flex-col items-center justify-center px-3 bg-[#1d3557]/5">
+            <span className="text-gray-400 text-[9px]">Pest.</span>
+            <span className="font-bold text-[#1a1a2e]">{dev.flap}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Total */}
       <div className="text-center">
-        <span className="inline-block bg-[#1d3557]/5 rounded-md px-3 py-1 text-[11px] font-mono font-semibold text-[#1d3557]">
-          {dev.width} × {dev.height} mm
+        <span className="inline-block bg-[#1d3557]/8 rounded-lg px-4 py-1.5 text-xs font-mono font-bold text-[#1d3557]">
+          Total: {dev.width} × {dev.height} mm
         </span>
       </div>
     </div>
