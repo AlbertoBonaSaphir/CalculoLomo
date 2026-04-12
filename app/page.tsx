@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   calculateSpine,
   type SpineInput,
@@ -8,11 +8,11 @@ import {
   type PaperType,
 } from "../lib/spine-calculator";
 
-const PAPER_TYPE_LABELS: Record<PaperType, string> = {
-  O: "Offset",
-  B: "Brillo",
-  M: "Mate",
-};
+const PAPER_TYPES: { value: PaperType; label: string }[] = [
+  { value: "O", label: "Offset" },
+  { value: "B", label: "Brillo" },
+  { value: "M", label: "Mate" },
+];
 
 const DEFAULT_INPUT: SpineInput = {
   width: 21,
@@ -27,9 +27,15 @@ const DEFAULT_INPUT: SpineInput = {
 
 export default function HomePage() {
   const [input, setInput] = useState<SpineInput>(DEFAULT_INPUT);
-  const [result, setResult] = useState<SpineResult | null>(null);
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
-  function handleChange(field: keyof SpineInput, value: string) {
+  // Real-time calculation
+  const result: SpineResult | null = useMemo(() => {
+    if (!input.pages || !input.paperWeight) return null;
+    return calculateSpine(input);
+  }, [input]);
+
+  function set(field: keyof SpineInput, value: string) {
     if (field === "paperType") {
       setInput((prev) => ({ ...prev, paperType: value as PaperType }));
     } else {
@@ -37,283 +43,185 @@ export default function HomePage() {
     }
   }
 
-  function handleCalculate() {
-    const res = calculateSpine(input);
-    setResult(res);
-  }
-
-  const fmt = (v: number, decimals = 2) => v.toFixed(decimals);
+  const fmt = (v: number, d = 1) => v.toFixed(d);
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
+    <main className="min-h-screen bg-[#fafafa]">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-extrabold text-[#e2001a] tracking-tight">
-          Cálculo de Lomo
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Datos en milímetros — Encuadernación profesional
-        </p>
-      </div>
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-extrabold text-[#1a1a2e] tracking-tight">Cálculo de Lomo</h1>
+            <p className="text-[11px] text-gray-400">Encuadernación profesional</p>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-[#e2001a] flex items-center justify-center">
+            <span className="text-white text-xs font-bold">S</span>
+          </div>
+        </div>
+      </header>
 
-      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input panel */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#e2001a] mb-5">
-            Datos del libro
-          </h2>
+      <div className="max-w-lg mx-auto px-5 py-6 space-y-5">
 
-          {/* Tamaño */}
-          <fieldset className="mb-5">
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Tamaño (cm)
-            </legend>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Ancho</span>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={input.width || ""}
-                  onChange={(e) => handleChange("width", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Alto</span>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={input.height || ""}
-                  onChange={(e) => handleChange("height", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-            </div>
-          </fieldset>
+        {/* === RESULTS (hero) === */}
+        {result && (
+          <div className="grid grid-cols-3 gap-3">
+            <SpineCard label="Fresado/PUR" value={result.fresado} raw={result.rawFresado} />
+            <SpineCard label="Rúst. Cosida" value={result.rusticaCosida} raw={result.rawRusticaCosida} />
+            <SpineCard label="Tapa Dura" value={result.tapaDura} raw={result.rawTapaDura} />
+          </div>
+        )}
 
-          {/* Páginas y gramaje cubierta */}
-          <fieldset className="mb-5">
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Interior
-            </legend>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Páginas</span>
-                <input
-                  type="number"
-                  step="1"
-                  value={input.pages || ""}
-                  onChange={(e) => handleChange("pages", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Gramaje cubierta (g)</span>
-                <input
-                  type="number"
-                  step="1"
-                  value={input.coverWeight || ""}
-                  onChange={(e) => handleChange("coverWeight", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-            </div>
-          </fieldset>
+        {/* === INPUTS === */}
+        <section className="bg-white rounded-2xl p-5 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+
+          {/* Tamaño + Páginas */}
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Ancho (cm)" value={input.width} step={0.1} onChange={(v) => set("width", v)} />
+            <Field label="Alto (cm)" value={input.height} step={0.1} onChange={(v) => set("height", v)} />
+            <Field label="Páginas" value={input.pages} step={1} onChange={(v) => set("pages", v)} />
+          </div>
 
           {/* Papel interior */}
-          <fieldset className="mb-5">
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Papel interior
-            </legend>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Tipo</span>
-                <div className="flex gap-1">
-                  {(["O", "B", "M"] as PaperType[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => handleChange("paperType", t)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
-                        input.paperType === t
-                          ? "bg-[#e2001a] text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {PAPER_TYPE_LABELS[t]}
-                    </button>
-                  ))}
-                </div>
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Gramaje (g)</span>
-                <input
-                  type="number"
-                  step="1"
-                  value={input.paperWeight || ""}
-                  onChange={(e) => handleChange("paperWeight", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-            </div>
-          </fieldset>
-
-          {/* Tapa dura */}
-          <fieldset className="mb-6">
-            <legend className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Tapa dura
-            </legend>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Cartón (mm)</span>
-                <input
-                  type="number"
-                  step="0.25"
-                  value={input.cardboardThickness || ""}
-                  onChange={(e) => handleChange("cardboardThickness", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400">Guardas (g)</span>
-                <input
-                  type="number"
-                  step="1"
-                  value={input.endpaperWeight || ""}
-                  onChange={(e) => handleChange("endpaperWeight", e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#e2001a]/30 focus:border-[#e2001a]"
-                />
-              </label>
-            </div>
-          </fieldset>
-
-          <button
-            onClick={handleCalculate}
-            className="w-full bg-[#e2001a] hover:bg-[#c50017] text-white font-bold py-3 rounded-lg transition-colors text-sm tracking-wide"
-          >
-            Calcular
-          </button>
-        </div>
-
-        {/* Results panel */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#e2001a] mb-5">
-            Resultados
-          </h2>
-
-          {!result ? (
-            <div className="flex items-center justify-center h-48 text-gray-300 text-sm">
-              Pulsa &quot;Calcular&quot; para ver los resultados
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Spine results */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  Lomo (mm)
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <ResultCard label="Fresado / PUR" value={result.fresado} raw={result.rawFresado} />
-                  <ResultCard label="Rústica Cosida" value={result.rusticaCosida} raw={result.rawRusticaCosida} />
-                  <ResultCard label="Tapa Dura" value={result.tapaDura} raw={result.rawTapaDura} />
-                </div>
-              </div>
-
-              {/* Weight: Rústica */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  Peso por ejemplar — Rústica (g)
-                </h3>
-                <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
-                  <Row label="Interiores" value={fmt(result.weightRustica.interior)} />
-                  <Row label="Cubierta plastificada" value={fmt(result.weightRustica.cover)} />
-                  <TotalRow value={fmt(result.weightRustica.total)} />
-                </div>
-              </div>
-
-              {/* Weight: Tapa dura */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  Peso por ejemplar — Tapa Dura (g)
-                </h3>
-                <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
-                  <Row label="Interiores" value={fmt(result.weightTapaDura.interior)} />
-                  <Row label="Forro cubierta" value={fmt(result.weightTapaDura.coverLining)} />
-                  <Row label="Cartón bigrís" value={fmt(result.weightTapaDura.cardboard)} />
-                  <Row label="Guardas" value={fmt(result.weightTapaDura.endpapers)} />
-                  <TotalRow value={fmt(result.weightTapaDura.total)} />
-                </div>
-              </div>
-
-              {/* Hardcover development */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  Desarrollo forro Tapa Dura (mm)
-                </h3>
-                <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-500">Ancho total</span>
-                    <span className="font-extrabold text-[#e2001a]">{fmt(result.hardcoverDevelopment.width, 1)}</span>
-                  </div>
-                  <div className="flex justify-between mb-3">
-                    <span className="text-gray-500">Alto total</span>
-                    <span className="font-extrabold text-[#e2001a]">{fmt(result.hardcoverDevelopment.height, 1)}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-center overflow-x-auto pb-1">
-                    <DevBlock label="Pestaña" value={result.hardcoverDevelopment.flap} />
-                    <DevBlock label="Contracub." value={result.hardcoverDevelopment.backCover} />
-                    <DevBlock label="Franq." value={result.hardcoverDevelopment.hinge} />
-                    <DevBlock label="Lomo" value={result.hardcoverDevelopment.spine} accent />
-                    <DevBlock label="Franq." value={result.hardcoverDevelopment.hinge} />
-                    <DevBlock label="Cubierta" value={result.hardcoverDevelopment.frontCover} />
-                    <DevBlock label="Pestaña" value={result.hardcoverDevelopment.flap} />
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Papel</span>
+              <div className="flex gap-1 h-[38px]">
+                {PAPER_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    onClick={() => set("paperType", t.value)}
+                    className={`flex-1 rounded-lg text-xs font-semibold transition-all ${
+                      input.paperType === t.value
+                        ? "bg-[#1a1a2e] text-white shadow-sm"
+                        : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-        </div>
+            <Field label="Gramaje interior (g)" value={input.paperWeight} step={5} onChange={(v) => set("paperWeight", v)} />
+          </div>
+
+          {/* Cubierta + Tapa dura */}
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Gramaje cub. (g)" value={input.coverWeight} step={10} onChange={(v) => set("coverWeight", v)} />
+            <Field label="Cartón (mm)" value={input.cardboardThickness} step={0.25} onChange={(v) => set("cardboardThickness", v)} />
+            <Field label="Guardas (g)" value={input.endpaperWeight} step={10} onChange={(v) => set("endpaperWeight", v)} />
+          </div>
+        </section>
+
+        {/* === DETAILS (collapsible) === */}
+        {result && (
+          <div className="space-y-2">
+            {/* Peso Rústica */}
+            <Accordion
+              title="Peso rústica"
+              right={`${fmt(result.weightRustica.total)} g`}
+              open={openSection === "rustica"}
+              onToggle={() => setOpenSection(openSection === "rustica" ? null : "rustica")}
+            >
+              <DetailRow label="Interiores" value={`${fmt(result.weightRustica.interior)} g`} />
+              <DetailRow label="Cubierta plastificada" value={`${fmt(result.weightRustica.cover)} g`} />
+            </Accordion>
+
+            {/* Peso Tapa dura */}
+            <Accordion
+              title="Peso tapa dura"
+              right={`${fmt(result.weightTapaDura.total)} g`}
+              open={openSection === "tapadura"}
+              onToggle={() => setOpenSection(openSection === "tapadura" ? null : "tapadura")}
+            >
+              <DetailRow label="Interiores" value={`${fmt(result.weightTapaDura.interior)} g`} />
+              <DetailRow label="Forro cubierta" value={`${fmt(result.weightTapaDura.coverLining)} g`} />
+              <DetailRow label="Cartón bigrís" value={`${fmt(result.weightTapaDura.cardboard)} g`} />
+              <DetailRow label="Guardas" value={`${fmt(result.weightTapaDura.endpapers)} g`} />
+            </Accordion>
+
+            {/* Desarrollo forro */}
+            <Accordion
+              title="Desarrollo forro"
+              right={`${fmt(result.hardcoverDevelopment.width)} × ${fmt(result.hardcoverDevelopment.height)} mm`}
+              open={openSection === "forro"}
+              onToggle={() => setOpenSection(openSection === "forro" ? null : "forro")}
+            >
+              <div className="flex items-center gap-0.5 text-[10px] text-center overflow-x-auto py-2">
+                <Block label="Pest." value={result.hardcoverDevelopment.flap} />
+                <Block label="Contrac." value={result.hardcoverDevelopment.backCover} />
+                <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
+                <Block label="Lomo" value={result.hardcoverDevelopment.spine} accent />
+                <Block label="Franq." value={result.hardcoverDevelopment.hinge} />
+                <Block label="Cubier." value={result.hardcoverDevelopment.frontCover} />
+                <Block label="Pest." value={result.hardcoverDevelopment.flap} />
+              </div>
+            </Accordion>
+          </div>
+        )}
+
       </div>
-
-      <p className="text-xs text-gray-300 mt-8">Saphir — Cálculo de Lomo v1.0</p>
     </main>
   );
 }
 
-function ResultCard({ label, value, raw }: { label: string; value: number; raw: number }) {
+/* --- Components --- */
+
+function Field({ label, value, step, onChange }: { label: string; value: number; step: number; onChange: (v: string) => void }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-3 text-center">
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-xl font-extrabold text-[#e2001a]">{value}</p>
-      <p className="text-[10px] text-gray-300 mt-1">({raw.toFixed(2)} mm)</p>
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{label}</span>
+      <input
+        type="number"
+        step={step}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-[38px] bg-gray-50 border-0 rounded-lg px-3 text-sm font-medium text-[#1a1a2e] focus:outline-none focus:ring-2 focus:ring-[#1a1a2e]/20 transition-shadow"
+      />
+    </label>
+  );
+}
+
+function SpineCard({ label, value, raw }: { label: string; value: number; raw: number }) {
+  return (
+    <div className="bg-white rounded-2xl p-4 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <p className="text-3xl font-extrabold text-[#1a1a2e] leading-none">{value}</p>
+      <p className="text-[10px] text-gray-300 mt-1 font-mono">{raw.toFixed(2)}</p>
+      <p className="text-[10px] font-semibold text-gray-400 mt-2 uppercase tracking-wider">{label}</p>
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Accordion({ title, right, open, onToggle, children }: { title: string; right: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-semibold">{value}</span>
+    <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+      <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-3.5 text-left">
+        <span className="text-sm font-semibold text-[#1a1a2e]">{title}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-[#e2001a]">{right}</span>
+          <svg className={`w-4 h-4 text-gray-300 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+      {open && <div className="px-5 pb-4 space-y-1.5">{children}</div>}
     </div>
   );
 }
 
-function TotalRow({ value }: { value: string }) {
+function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-t border-gray-200 pt-1 mt-1">
-      <span className="font-bold text-[#1a1a2e]">Total</span>
-      <span className="font-extrabold text-[#e2001a]">{value}</span>
+    <div className="flex justify-between text-sm">
+      <span className="text-gray-400">{label}</span>
+      <span className="font-medium text-gray-600">{value}</span>
     </div>
   );
 }
 
-function DevBlock({ label, value, accent = false }: { label: string; value: number; accent?: boolean }) {
+function Block({ label, value, accent = false }: { label: string; value: number; accent?: boolean }) {
   return (
-    <div className={`flex-shrink-0 rounded px-2 py-1 ${accent ? "bg-[#e2001a]/10 border border-[#e2001a]/30" : "bg-white border border-gray-200"}`}>
-      <p className="text-[9px] text-gray-400">{label}</p>
-      <p className={`text-xs font-bold ${accent ? "text-[#e2001a]" : "text-gray-700"}`}>{value}</p>
+    <div className={`flex-shrink-0 rounded-md px-2 py-1.5 ${accent ? "bg-[#e2001a]/8 ring-1 ring-[#e2001a]/20" : "bg-gray-50"}`}>
+      <p className="text-gray-400 leading-none mb-0.5">{label}</p>
+      <p className={`text-xs font-bold leading-none ${accent ? "text-[#e2001a]" : "text-[#1a1a2e]"}`}>{value}</p>
     </div>
   );
 }
