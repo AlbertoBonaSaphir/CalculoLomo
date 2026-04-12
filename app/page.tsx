@@ -18,11 +18,11 @@ const DEFAULT_INPUT: SpineInput = {
   width: 0,
   height: 0,
   pages: 0,
-  coverWeight: 0,
+  coverWeight: 300,
   paperType: "O",
   paperWeight: 0,
-  cardboardThickness: 0,
-  endpaperWeight: 0,
+  cardboardThickness: 2.5,
+  endpaperWeight: 140,
 };
 
 type BindingType = "blanda" | "dura";
@@ -30,7 +30,7 @@ type BindingType = "blanda" | "dura";
 export default function HomePage() {
   const [input, setInput] = useState<SpineInput>(DEFAULT_INPUT);
   const [binding, setBinding] = useState<BindingType>("blanda");
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["peso", "desarrollo"]));
   const widthRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,9 +51,18 @@ export default function HomePage() {
     }
   }
 
+  function toggleSection(key: string) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   function clearAll() {
     setInput(DEFAULT_INPUT);
-    setOpenSection(null);
+    setOpenSections(new Set(["peso", "desarrollo"]));
     widthRef.current?.focus();
   }
 
@@ -157,22 +166,22 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Gramaje forro (g)" value={input.coverWeight} step={10} onChange={(v) => set("coverWeight", v)} />
+              <Field label="Gramaje cubierta (g)" value={input.coverWeight} step={10} onChange={(v) => set("coverWeight", v)} />
               <Field label="Cartón (mm)" value={input.cardboardThickness} step={0.25} onChange={(v) => set("cardboardThickness", v)} />
               <Field label="Guardas (g)" value={input.endpaperWeight} step={10} onChange={(v) => set("endpaperWeight", v)} />
             </div>
           )}
         </section>
 
-        {/* === DETAILS (collapsible) === */}
+        {/* === DETAILS === */}
         {result && (
           <div className="space-y-2">
             {binding === "blanda" ? (
               <Accordion
                 title="Peso por ejemplar"
                 right={`${fmt(result.weightRustica.total)} g`}
-                open={openSection === "peso"}
-                onToggle={() => setOpenSection(openSection === "peso" ? null : "peso")}
+                open={openSections.has("peso")}
+                onToggle={() => toggleSection("peso")}
               >
                 <DetailRow label="Interiores" value={`${fmt(result.weightRustica.interior)} g`} />
                 <DetailRow label="Cubierta plastificada" value={`${fmt(result.weightRustica.cover)} g`} />
@@ -182,8 +191,8 @@ export default function HomePage() {
                 <Accordion
                   title="Peso por ejemplar"
                   right={`${fmt(result.weightTapaDura.total)} g`}
-                  open={openSection === "peso"}
-                  onToggle={() => setOpenSection(openSection === "peso" ? null : "peso")}
+                  open={openSections.has("peso")}
+                  onToggle={() => toggleSection("peso")}
                 >
                   <DetailRow label="Interiores" value={`${fmt(result.weightTapaDura.interior)} g`} />
                   <DetailRow label="Forro cubierta" value={`${fmt(result.weightTapaDura.coverLining)} g`} />
@@ -192,10 +201,10 @@ export default function HomePage() {
                 </Accordion>
 
                 <Accordion
-                  title="Desarrollo forro"
+                  title="Desarrollo"
                   right={`${fmt(result.hardcoverDevelopment.width)} × ${fmt(result.hardcoverDevelopment.height)} mm`}
-                  open={openSection === "forro"}
-                  onToggle={() => setOpenSection(openSection === "forro" ? null : "forro")}
+                  open={openSections.has("desarrollo")}
+                  onToggle={() => toggleSection("desarrollo")}
                 >
                   <DevelopmentDiagram dev={result.hardcoverDevelopment} />
                 </Accordion>
@@ -265,64 +274,95 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function DevelopmentDiagram({ dev }: { dev: SpineResult["hardcoverDevelopment"] }) {
   const sections = [
-    { label: "Pest.", value: dev.flap, accent: false },
-    { label: "Contracub.", value: dev.backCover, accent: false },
-    { label: "Franq.", value: dev.hinge, accent: false },
-    { label: "Lomo", value: dev.spine, accent: true },
-    { label: "Franq.", value: dev.hinge, accent: false },
-    { label: "Cubierta", value: dev.frontCover, accent: false },
-    { label: "Pest.", value: dev.flap, accent: false },
+    { label: "Pestaña", value: dev.flap, accent: false, small: true },
+    { label: "Contracubierta", value: dev.backCover, accent: false, small: false },
+    { label: "Franquicia", value: dev.hinge, accent: false, small: true },
+    { label: "Lomo", value: dev.spine, accent: true, small: true },
+    { label: "Franquicia", value: dev.hinge, accent: false, small: true },
+    { label: "Cubierta", value: dev.frontCover, accent: false, small: false },
+    { label: "Pestaña", value: dev.flap, accent: false, small: true },
   ];
   const totalW = dev.width;
   const cardboardH = dev.height - dev.flap * 2;
+  const flapPct = (dev.flap / dev.height) * 100;
 
   return (
-    <div className="py-3 space-y-2">
-      {/* Main rectangle diagram */}
-      <div className="relative border border-gray-300 rounded-sm overflow-hidden" style={{ aspectRatio: `${totalW} / ${dev.height}` }}>
-        {/* Top flap */}
-        <div
-          className="absolute inset-x-0 top-0 border-b border-dashed border-gray-300"
-          style={{ height: `${(dev.flap / dev.height) * 100}%` }}
-        />
-        {/* Bottom flap */}
-        <div
-          className="absolute inset-x-0 bottom-0 border-t border-dashed border-gray-300"
-          style={{ height: `${(dev.flap / dev.height) * 100}%` }}
-        />
-        {/* Vertical sections */}
-        <div className="absolute inset-0 flex">
-          {sections.map((s, i) => (
-            <div
-              key={i}
-              className={`h-full ${s.accent ? "bg-[#1d3557]/10" : ""} ${i < sections.length - 1 ? "border-r border-dashed border-gray-300" : ""}`}
-              style={{ width: `${(s.value / totalW) * 100}%` }}
-            />
-          ))}
+    <div className="py-3 space-y-3">
+      {/* Diagram with height labels */}
+      <div className="flex items-stretch gap-2">
+        {/* Height labels left */}
+        <div className="flex flex-col text-[9px] font-mono text-gray-400 w-8 flex-shrink-0">
+          <div className="flex items-center justify-end" style={{ height: `${flapPct}%` }}>
+            <span>{dev.flap}</span>
+          </div>
+          <div className="flex items-center justify-end flex-1">
+            <span>{cardboardH}</span>
+          </div>
+          <div className="flex items-center justify-end" style={{ height: `${flapPct}%` }}>
+            <span>{dev.flap}</span>
+          </div>
         </div>
-        {/* Height label right side */}
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 text-[9px] text-gray-400 font-mono">
-          {cardboardH}
+
+        {/* Main rectangle */}
+        <div className="flex-1 relative rounded-md overflow-hidden border-2 border-[#1d3557]/30" style={{ aspectRatio: `${totalW} / ${dev.height}` }}>
+          {/* Top flap area */}
+          <div
+            className="absolute inset-x-0 top-0 bg-gray-50/80 border-b border-dashed border-[#1d3557]/20"
+            style={{ height: `${flapPct}%` }}
+          />
+          {/* Bottom flap area */}
+          <div
+            className="absolute inset-x-0 bottom-0 bg-gray-50/80 border-t border-dashed border-[#1d3557]/20"
+            style={{ height: `${flapPct}%` }}
+          />
+          {/* Vertical sections */}
+          <div className="absolute inset-0 flex">
+            {sections.map((s, i) => (
+              <div
+                key={i}
+                className={`h-full flex items-center justify-center ${
+                  s.accent ? "bg-[#1d3557]/15" : ""
+                } ${i < sections.length - 1 ? "border-r border-dashed border-[#1d3557]/20" : ""}`}
+                style={{ width: `${(s.value / totalW) * 100}%` }}
+              >
+                {!s.small && (
+                  <span className="text-[9px] font-medium text-[#1d3557]/40 select-none">
+                    {s.label}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Width dimension labels */}
-      <div className="flex text-[9px] font-mono text-center">
+      {/* Width dimension labels below diagram */}
+      <div className="flex ml-10">
         {sections.map((s, i) => (
           <div
             key={i}
-            className={`${s.accent ? "text-[#1d3557] font-bold" : "text-gray-400"}`}
+            className="flex flex-col items-center"
             style={{ width: `${(s.value / totalW) * 100}%` }}
           >
-            <p className="leading-none">{s.value}</p>
-            <p className="leading-none mt-0.5 text-[8px] text-gray-300">{s.label}</p>
+            <div className={`text-[10px] font-mono font-bold leading-none ${
+              s.accent ? "text-[#1d3557]" : "text-gray-500"
+            }`}>
+              {s.value}
+            </div>
+            <div className={`text-[8px] leading-none mt-0.5 ${
+              s.accent ? "text-[#1d3557]/70" : "text-gray-300"
+            }`}>
+              {s.small ? s.label.substring(0, 4) + "." : s.label.substring(0, 6) + "."}
+            </div>
           </div>
         ))}
       </div>
 
       {/* Total dimensions */}
-      <div className="text-center text-[10px] text-gray-400 font-mono">
-        {dev.width} × {dev.height} mm
+      <div className="text-center">
+        <span className="inline-block bg-[#1d3557]/5 rounded-md px-3 py-1 text-[11px] font-mono font-semibold text-[#1d3557]">
+          {dev.width} × {dev.height} mm
+        </span>
       </div>
     </div>
   );

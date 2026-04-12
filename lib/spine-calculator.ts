@@ -160,8 +160,8 @@ export function calculateSpine(input: SpineInput): SpineResult {
   const cardboardHeightMm = height * 10 + 7;
   const developmentHeight = cardboardHeightMm + flap * 2;
 
-  // Hardcover lining weight (forro + plastification 13 gsm)
-  const liningWeight = (developmentWidth * developmentHeight) * (coverWeight + 13) / 1000000;
+  // Hardcover lining weight (forro 150 gsm + plastification 13 gsm = 163 gsm)
+  const liningWeight = (developmentWidth * developmentHeight) * 163 / 1000000;
 
   // Cardboard weight (bigris)
   const cardboardGsm = lookupCardboardWeight(cardboardThickness);
