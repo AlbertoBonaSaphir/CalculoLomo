@@ -57,9 +57,11 @@ export default function HomePage() {
             <h1 className="text-lg font-extrabold text-[#1a1a2e] tracking-tight">Cálculo de Lomo</h1>
             <p className="text-[11px] text-gray-400">Encuadernación profesional</p>
           </div>
-          <div className="w-8 h-8 rounded-full bg-[#e2001a] flex items-center justify-center">
-            <span className="text-white text-xs font-bold">S</span>
-          </div>
+          <svg className="w-8 h-8 text-[#e2001a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+            <path d="M8 7h6" />
+            <path d="M8 11h4" />
+          </svg>
         </div>
       </header>
 
