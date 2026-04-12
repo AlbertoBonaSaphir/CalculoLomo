@@ -273,69 +273,103 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 }
 
 function DevelopmentDiagram({ dev }: { dev: SpineResult["hardcoverDevelopment"] }) {
-  const sections = [
-    { label: "Pest.", value: dev.flap, accent: false, grow: 0 },
-    { label: "Contracub.", value: dev.backCover, accent: false, grow: 1 },
-    { label: "Franq.", value: dev.hinge, accent: false, grow: 0 },
-    { label: "Lomo", value: dev.spine, accent: true, grow: 0 },
-    { label: "Franq.", value: dev.hinge, accent: false, grow: 0 },
-    { label: "Cubierta", value: dev.frontCover, accent: false, grow: 1 },
-    { label: "Pest.", value: dev.flap, accent: false, grow: 0 },
+  const cols = [
+    { label: "Pest.", value: dev.flap, accent: false, large: false },
+    { label: "Contracub.", value: dev.backCover, accent: false, large: true },
+    { label: "Franq.", value: dev.hinge, accent: false, large: false },
+    { label: "Lomo", value: dev.spine, accent: true, large: false },
+    { label: "Franq.", value: dev.hinge, accent: false, large: false },
+    { label: "Cubierta", value: dev.frontCover, accent: false, large: true },
+    { label: "Pest.", value: dev.flap, accent: false, large: false },
   ];
   const cardboardH = dev.height - dev.flap * 2;
 
   return (
-    <div className="py-2 space-y-4">
-      {/* Horizontal bar diagram */}
-      <div className="flex h-16 rounded-lg overflow-hidden border-2 border-[#1d3557]/25">
-        {sections.map((s, i) => (
-          <div
-            key={i}
-            className={`flex flex-col items-center justify-center px-1 ${
-              s.accent
-                ? "bg-[#1d3557] text-white"
-                : i === 0 || i === sections.length - 1
-                  ? "bg-[#1d3557]/5"
-                  : "bg-white"
-            } ${i < sections.length - 1 ? "border-r border-[#1d3557]/15" : ""}`}
-            style={{ flexGrow: s.grow, flexBasis: s.grow ? 0 : "auto", minWidth: "40px" }}
-          >
-            <span className={`text-[10px] font-medium leading-tight ${
-              s.accent ? "text-white/80" : "text-gray-400"
-            }`}>
-              {s.label}
-            </span>
-            <span className={`text-sm font-bold leading-tight ${
-              s.accent ? "text-white" : "text-[#1a1a2e]"
-            }`}>
-              {s.value}
-            </span>
+    <div className="py-2">
+      <div className="flex gap-1.5">
+        {/* Main 2D diagram */}
+        <div className="flex-1 min-w-0">
+          {/* Top flap row */}
+          <div className="flex border border-b-0 border-[#1d3557]/25 rounded-t-md overflow-hidden" style={{ height: "24px" }}>
+            {cols.map((c, i) => (
+              <div
+                key={i}
+                className={`${
+                  c.accent ? "bg-[#1d3557]/10" : (i === 0 || i === cols.length - 1) ? "bg-[#1d3557]/5" : "bg-gray-50/50"
+                } ${i < cols.length - 1 ? "border-r border-dashed border-[#1d3557]/15" : ""}`}
+                style={{ flexGrow: c.large ? 1 : 0, flexBasis: c.large ? 0 : "auto", minWidth: c.large ? 0 : "36px" }}
+              />
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Height breakdown */}
-      <div className="flex items-center gap-3 justify-center">
-        <div className="flex items-center h-10 rounded-lg overflow-hidden border border-[#1d3557]/15 text-[11px]">
-          <div className="h-full flex flex-col items-center justify-center px-3 bg-[#1d3557]/5">
-            <span className="text-gray-400 text-[9px]">Pest.</span>
-            <span className="font-bold text-[#1a1a2e]">{dev.flap}</span>
+          {/* Main body row */}
+          <div className="flex border-x border-[#1d3557]/25 border-y border-dashed border-y-[#1d3557]/20" style={{ height: "72px" }}>
+            {cols.map((c, i) => (
+              <div
+                key={i}
+                className={`flex items-center justify-center ${
+                  c.accent ? "bg-[#1d3557]/12" : ""
+                } ${i < cols.length - 1 ? "border-r border-dashed border-[#1d3557]/15" : ""}`}
+                style={{ flexGrow: c.large ? 1 : 0, flexBasis: c.large ? 0 : "auto", minWidth: c.large ? 0 : "36px" }}
+              >
+                <span className={`text-[10px] font-medium ${
+                  c.accent ? "text-[#1d3557] font-bold" : c.large ? "text-gray-400" : "text-gray-300"
+                }`}>
+                  {c.label}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className="h-full flex flex-col items-center justify-center px-5 border-x border-[#1d3557]/15">
-            <span className="text-gray-400 text-[9px]">Alto cartón</span>
-            <span className="font-bold text-[#1a1a2e]">{cardboardH}</span>
+
+          {/* Bottom flap row */}
+          <div className="flex border border-t-0 border-[#1d3557]/25 rounded-b-md overflow-hidden" style={{ height: "24px" }}>
+            {cols.map((c, i) => (
+              <div
+                key={i}
+                className={`${
+                  c.accent ? "bg-[#1d3557]/10" : (i === 0 || i === cols.length - 1) ? "bg-[#1d3557]/5" : "bg-gray-50/50"
+                } ${i < cols.length - 1 ? "border-r border-dashed border-[#1d3557]/15" : ""}`}
+                style={{ flexGrow: c.large ? 1 : 0, flexBasis: c.large ? 0 : "auto", minWidth: c.large ? 0 : "36px" }}
+              />
+            ))}
           </div>
-          <div className="h-full flex flex-col items-center justify-center px-3 bg-[#1d3557]/5">
-            <span className="text-gray-400 text-[9px]">Pest.</span>
-            <span className="font-bold text-[#1a1a2e]">{dev.flap}</span>
+
+          {/* Width dimensions below */}
+          <div className="flex mt-1.5">
+            {cols.map((c, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center"
+                style={{ flexGrow: c.large ? 1 : 0, flexBasis: c.large ? 0 : "auto", minWidth: c.large ? 0 : "36px" }}
+              >
+                <span className={`text-[11px] font-mono font-bold ${
+                  c.accent ? "text-[#1d3557]" : "text-gray-500"
+                }`}>
+                  {c.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Height dimensions right side */}
+        <div className="flex flex-col items-center w-10 flex-shrink-0">
+          <div className="flex items-center justify-center text-[10px] font-mono text-gray-400" style={{ height: "24px" }}>
+            {dev.flap}
+          </div>
+          <div className="flex items-center justify-center text-[11px] font-mono font-bold text-[#1d3557]" style={{ height: "72px" }}>
+            {cardboardH}
+          </div>
+          <div className="flex items-center justify-center text-[10px] font-mono text-gray-400" style={{ height: "24px" }}>
+            {dev.flap}
           </div>
         </div>
       </div>
 
-      {/* Total */}
-      <div className="text-center">
+      {/* Total dimensions */}
+      <div className="text-center mt-3">
         <span className="inline-block bg-[#1d3557]/8 rounded-lg px-4 py-1.5 text-xs font-mono font-bold text-[#1d3557]">
-          Total: {dev.width} × {dev.height} mm
+          {dev.width} × {dev.height} mm
         </span>
       </div>
     </div>
