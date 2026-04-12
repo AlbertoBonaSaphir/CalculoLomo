@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+:root {
+  --saphir-red: #e2001a;
+}
+
+body {
+  background: #f8f9fa;
+  color: #1a1a2e;
+}
