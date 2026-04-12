@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import {
   calculateSpine,
   type SpineInput,
   type SpineResult,
   type PaperType,
 } from "../lib/spine-calculator";
+import logo from "../public/logo.jpg";
 
 const PAPER_TYPES: { value: PaperType; label: string }[] = [
   { value: "O", label: "Offset" },
@@ -57,11 +59,7 @@ export default function HomePage() {
             <h1 className="text-lg font-extrabold text-[#1a1a2e] tracking-tight">Cálculo de Lomo</h1>
             <p className="text-[11px] text-gray-400">Encuadernación profesional</p>
           </div>
-          <svg className="w-8 h-8 text-[#e2001a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-            <path d="M8 7h6" />
-            <path d="M8 11h4" />
-          </svg>
+          <Image src={logo} alt="Logo" className="w-9 h-9 rounded-full" />
         </div>
       </header>
 
@@ -94,7 +92,7 @@ export default function HomePage() {
                   onClick={() => setBinding(val)}
                   className={`flex-1 rounded-lg text-xs font-semibold transition-all ${
                     binding === val
-                      ? "bg-[#e2001a] text-white shadow-sm"
+                      ? "bg-[#1d3557] text-white shadow-sm"
                       : "bg-gray-50 text-gray-500 hover:bg-gray-100"
                   }`}
                 >
@@ -122,7 +120,7 @@ export default function HomePage() {
                     onClick={() => set("paperType", t.value)}
                     className={`flex-1 rounded-lg text-xs font-semibold transition-all ${
                       input.paperType === t.value
-                        ? "bg-[#1a1a2e] text-white shadow-sm"
+                        ? "bg-[#1d3557] text-white shadow-sm"
                         : "bg-gray-50 text-gray-500 hover:bg-gray-100"
                     }`}
                   >
@@ -234,7 +232,7 @@ function Accordion({ title, right, open, onToggle, children }: { title: string; 
       <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-3.5 text-left">
         <span className="text-sm font-semibold text-[#1a1a2e]">{title}</span>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-[#e2001a]">{right}</span>
+          <span className="text-sm font-bold text-[#1d3557]">{right}</span>
           <svg className={`w-4 h-4 text-gray-300 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -256,9 +254,9 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function Block({ label, value, accent = false }: { label: string; value: number; accent?: boolean }) {
   return (
-    <div className={`flex-shrink-0 rounded-md px-2 py-1.5 ${accent ? "bg-[#e2001a]/8 ring-1 ring-[#e2001a]/20" : "bg-gray-50"}`}>
+    <div className={`flex-shrink-0 rounded-md px-2 py-1.5 ${accent ? "bg-[#1d3557]/8 ring-1 ring-[#1d3557]/20" : "bg-gray-50"}`}>
       <p className="text-gray-400 leading-none mb-0.5">{label}</p>
-      <p className={`text-xs font-bold leading-none ${accent ? "text-[#e2001a]" : "text-[#1a1a2e]"}`}>{value}</p>
+      <p className={`text-xs font-bold leading-none ${accent ? "text-[#1d3557]" : "text-[#1a1a2e]"}`}>{value}</p>
     </div>
   );
 }

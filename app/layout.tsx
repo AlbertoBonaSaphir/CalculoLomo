@@ -8,7 +8,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Cálculo de Lomo — Saphir",
+  title: "Calculo Lomo",
   description: "Calculadora de lomo para encuadernación: Fresado/PUR, Rústica Cosida y Tapa Dura",
 };
 
