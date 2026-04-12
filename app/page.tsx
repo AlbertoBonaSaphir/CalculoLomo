@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
 import {
   calculateSpine,
   type SpineInput,
   type SpineResult,
   type PaperType,
 } from "../lib/spine-calculator";
-import logo from "../public/logo.jpg";
 
 const PAPER_TYPES: { value: PaperType; label: string }[] = [
   { value: "O", label: "Offset" },
@@ -59,7 +57,8 @@ export default function HomePage() {
             <h1 className="text-lg font-extrabold text-[#1a1a2e] tracking-tight">Cálculo de Lomo</h1>
             <p className="text-[11px] text-gray-400">Encuadernación profesional</p>
           </div>
-          <Image src={logo} alt="Logo" className="w-9 h-9 rounded-full" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/CalculoLomo/logo.jpg" alt="Logo" className="w-9 h-9 rounded-full" />
         </div>
       </header>
 
