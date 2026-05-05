@@ -4,8 +4,8 @@
 export type PaperType = "O" | "B" | "M"; // Offset, Brillo (gloss), Mate
 
 export interface SpineInput {
-  width: number;         // Book width in cm
-  height: number;        // Book height in cm
+  width: number;         // Book width in mm
+  height: number;        // Book height in mm
   pages: number;         // Interior pages count
   coverWeight: number;   // Cover paper weight in gsm
   paperType: PaperType;  // Interior paper finish
@@ -45,6 +45,14 @@ export interface SpineResult {
     hinge: number;         // Franquicia
     spine: number;         // Lomo
     frontCover: number;    // Cubierta
+  };
+  // Softcover (rústica) cover development in mm
+  softcoverDevelopment: {
+    width: number;       // Total development width
+    height: number;      // Total development height
+    backCover: number;   // Contracubierta
+    spine: number;       // Lomo (rústica cosida)
+    frontCover: number;  // Cubierta
   };
 }
 
@@ -123,10 +131,12 @@ function roundSpine(raw: number, minimum: number): number {
  */
 export function calculateSpine(input: SpineInput): SpineResult {
   const {
-    width, height, pages, coverWeight,
+    pages, coverWeight,
     paperType, paperWeight,
     cardboardThickness, endpaperWeight,
   } = input;
+  const width = input.width / 10;   // mm → cm (legacy formulas use cm)
+  const height = input.height / 10; // mm → cm (legacy formulas use cm)
 
   const calibre = lookupCalibre(paperWeight, paperType);
 
@@ -170,6 +180,13 @@ export function calculateSpine(input: SpineInput): SpineResult {
   // Endpapers weight (guardas)
   const endpapersWeight = ((width * height) * 4) * endpaperWeight / 10000;
 
+  // Softcover (rústica) development in mm — front + spine + back, no flaps
+  const softBackCover = input.width;
+  const softFrontCover = input.width;
+  const softSpine = rusticaCosida;
+  const softDevWidth = softBackCover + softSpine + softFrontCover;
+  const softDevHeight = input.height;
+
   return {
     rawFresado,
     rawRusticaCosida,
@@ -197,6 +214,13 @@ export function calculateSpine(input: SpineInput): SpineResult {
       hinge,
       spine: spineMm,
       frontCover: frontCoverMm,
+    },
+    softcoverDevelopment: {
+      width: softDevWidth,
+      height: softDevHeight,
+      backCover: softBackCover,
+      spine: softSpine,
+      frontCover: softFrontCover,
     },
   };
 }
